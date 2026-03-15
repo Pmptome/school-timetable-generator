@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Timetable Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <div class="logo">📅 School Timetable Generator</div>
+        </div>
+        
+        <div class="header-actions">
+            <select id="scheduleSelect" title="Active Schedule"></select>
+            
+            <div class="dropdown">
+                <button class="btn secondary-btn">📥 Export Menu</button>
+                <div class="dropdown-content">
+                    <button class="dropdown-item" id="printBtn">🖨️ Print Timetable</button>
+                    <button class="dropdown-item" id="downloadPdfBtn">📄 Export PDF</button>
+                    <button class="dropdown-item" id="downloadPngBtn">🖼️ Export PNG</button>
+                    <button class="dropdown-item" id="exportIcsBtn">📆 Calendar (.ICS)</button>
+                    <hr style="opacity: 0.1; margin: 0.5rem 0;">
+                    <button class="dropdown-item" id="exportJsonBtn">💾 Backup (JSON)</button>
+                    <button class="dropdown-item" id="importBtn">📂 Import Backup</button>
+                </div>
+            </div>
+
+            <button id="darkModeToggle" class="btn secondary-btn" title="Switch Theme">🌙</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Left Panel: Add Class -->
+        <aside class="panel">
+            <h2 class="panel-title">📚 Add Class</h2>
+            <form id="classForm">
+                <div class="form-group">
+                    <label for="className">Class Name</label>
+                    <input type="text" id="className" list="classNameList" placeholder="e.g. Mathematics" required>
+                    <datalist id="classNameList"></datalist>
+                </div>
+
+                <div class="form-group">
+                    <label for="dayOfWeek">Day of Week</label>
+                        <select id="dayOfWeek" required>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                        </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="startTime">Start Time</label>
+                        <input type="time" id="startTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endTime">End Time</label>
+                        <input type="time" id="endTime" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="teacherName">Teacher</label>
+                    <input type="text" id="teacherName" list="teacherNameList" placeholder="Instructor Name">
+                    <datalist id="teacherNameList"></datalist>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Room / Location</label>
+                    <input type="text" id="location" placeholder="e.g. Room 101">
+                </div>
+
+                <div class="form-group">
+                    <label for="classColor">Block Color</label>
+                    <input type="color" id="classColor" value="#2563eb">
+                </div>
+
+                <div class="form-group">
+                    <label for="classNotes">Notes (optional)</label>
+                    <input type="text" id="classNotes" placeholder="Additional info...">
+                </div>
+
+                <button type="submit" class="btn primary-btn">Add Class to Timetable</button>
+            </form>
+        </aside>
+
+        <!-- Center Panel: Grid -->
+        <section class="grid-panel">
+            <!-- Jikanwari Japanese Theme Header (Hidden in Edit Mode) -->
+            <div class="jikanwari-header">
+                <span class="decoration-icon" style="top: 10px; left: 10px;">🦒</span>
+                <span class="decoration-icon" style="top: 10px; right: 10px;">🐻</span>
+                <span class="decoration-icon" style="top: 60px; left: 50px;">🎵</span>
+                <span class="decoration-icon" style="top: 60px; right: 50px;">🎶</span>
+                <h1 class="jikanwari-title">じかんわり</h1>
+            </div>
+
+            <div class="grid-header">
+                <div>
+                    <h1 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 2px;">Timetable Grid</h1>
+                    <div id="liveClock" class="live-status">Checking live schedule...</div>
+                </div>
+                <button id="openAutoGenModal" class="btn primary-btn" style="width: auto;">✨ Generate Timetable Automatically</button>
+            </div>
+
+            <div class="table-wrapper">
+                <div id="emptyState" class="empty-state">
+                    <h2>Your timetable is empty.</h2>
+                    <p>Add your first class or generate one automatically.</p>
+                </div>
+                <table id="timetableTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th class="time-cell">Time</th>
+                            <th>Monday</th>
+                            <th>Tuesday</th>
+                            <th>Wednesday</th>
+                            <th>Thursday</th>
+                            <th>Friday</th>
+                            <th>Saturday</th>
+                        </tr>
+                    </thead>
+                    <tbody id="timetableBody">
+                        <!-- Injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                <div id="printApproval" class="approval-section">
+                    <div class="signature-line">Authorized Signature</div>
+                    <div class="signature-date">Date: ____________</div>
+                </div>
+                <button id="clearBtn" class="btn" style="color: var(--error-color); font-size: 0.8rem;">🗑️ Clear Current Schedule</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Auto Gen Modal -->
+    <div id="autoGenModal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 1.5rem;">✨ Automatic Generation</h2>
+            <form id="autoGenForm">
+                <div class="form-group">
+                    <label>Subjects (separated by comma)</label>
+                    <input type="text" id="autoSubjects" placeholder="Math, Physics, Bio, History" required>
+                </div>
+                <div class="form-group">
+                    <label>Teachers (separated by comma)</label>
+                    <input type="text" id="autoTeachers" placeholder="Dr. Smith, Prof. Jane, Mr. Brown" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Periods per Day</label>
+                        <input type="number" id="autoPeriods" value="5" min="1" max="8">
+                    </div>
+                    <div class="form-group">
+                        <label>Days (1-5)</label>
+                        <input type="number" id="autoDays" value="5" min="1" max="5">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="button" id="closeModal" class="btn secondary-btn" style="flex: 1;">Cancel</button>
+                    <button type="submit" class="btn primary-btn" style="flex: 2;">Generate Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
