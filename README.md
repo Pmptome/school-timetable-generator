@@ -12,3 +12,5 @@ Features:
 ----------------------------------------------------------------------------------
 Live Demo:
 https://pmptome.github.io/school-timetable-generator/
+
+## Screenshot
