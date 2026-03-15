@@ -14,3 +14,10 @@ Live Demo:
 https://pmptome.github.io/school-timetable-generator/
 
 ## Screenshot
+
+
+## Contact
+
+For licensing or customization please contact:
+
+piyushyadav4058@gmail.com
